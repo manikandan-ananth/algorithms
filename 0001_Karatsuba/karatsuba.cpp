@@ -1,10 +1,11 @@
 /********************************************************************************
  * Karatsuba multiplication for 2 large numbers
- * Tested only for s1.len == s2.len cases
- * positive numbers only
 ********************************************************************************/
 #include <iostream>
 #include <string>
+#include <fstream>
+
+bool debug = false;
 
 std::string sum(std::string const &s1, std::string const &s2) {
     std::string sum_string = ""; 
@@ -32,10 +33,20 @@ std::string sum(std::string const &s1, std::string const &s2) {
     
     std::string final_sum_string(sum_string.rbegin(), sum_string.rend());
 
-    while (final_sum_string.at(0) == '0' && final_sum_string.length() > 0) {
+    bool all_zeros = true;
+    for(auto itr = final_sum_string.begin(); itr != final_sum_string.end(); itr++) {
+        if (*itr != '0') {
+            all_zeros = false;
+            break;
+        }
+    }
+    if (all_zeros)
+        return "0";
+
+    while (final_sum_string.at(0) == '0' && final_sum_string.size() > 0) {
         final_sum_string.erase(final_sum_string.begin());
     }
-    std::cout << s1 << " + " << s2 << " = " << final_sum_string << std::endl;
+    if (debug) std::cout << s1 << " + " << s2 << " = " << final_sum_string << std::endl;
     return final_sum_string;
 }
 
@@ -51,7 +62,7 @@ std::string difference(std::string const &s1, std::string const &s2) {
             a--;
             carry = false;
         }
-        // std::cout << "Subtracting a,b=" <<a<<","<<b<<" carry="<<carry;
+        if(debug) std::cout << "Subtracting a,b=" <<a<<","<<b<<" carry="<<carry;
         if (a < b) {
             // carry over
             a += 10;
@@ -60,38 +71,54 @@ std::string difference(std::string const &s1, std::string const &s2) {
         }
         int r = a-b;
         res.append(std::to_string(r));
-        // std::cout << " res="<<res<<std::endl;
+        if(debug) std::cout << " res="<<res<<std::endl;
     }
     while (it1!=s1.rend()) {
         int a = *it1 - '0';
+        if(debug) std::cout << "remainders a=" << a << " carry=" << carry;
         if (carry) {
             a--;
-            carry = false;
+            if (a == -1) {
+                a += 10;
+                // carry stays true
+            } else
+                carry = false;
         }
         res.append(std::to_string(a));
-        // std::cout << " res="<<res<<std::endl;
+        if(debug) std::cout << " res="<<res<<std::endl;
         it1++;
     }
 
     std::string final_sum_string(res.rbegin(), res.rend());
-    while (final_sum_string.at(0) == '0' && final_sum_string.length() > 0) {
+
+    bool all_zeros = true;
+    for(auto itr = final_sum_string.begin(); itr != final_sum_string.end(); itr++) {
+        if (*itr != '0') {
+            all_zeros = false;
+            break;
+        }
+    }
+    if (all_zeros)
+        return "0";
+
+    while (final_sum_string.at(0) == '0' && final_sum_string.size() > 0) {
         final_sum_string.erase(final_sum_string.begin());
     }
-    std::cout << s1 << " - " << s2 << " = " << final_sum_string << std::endl;
+    if(debug) std::cout << s1 << " - " << s2 << " = " << final_sum_string << std::endl;
     return final_sum_string;
 }
 
 void normalize_for_karatsuba(std::string &s, int l) {
     if (s.size() > l)
         return;
-    std::cout << "Normalized " << s;
+    if(debug) std::cout << "Normalized " << s;
     int diff = l - s.size(); // # of zeros to add
     std::string s1 = "";
     for (int i=0;i<diff;i++)
         s1 += "0";
     s1+=s;
     s = s1;
-    std::cout << " to " << s << std::endl;
+    if (debug) std::cout << " to " << s << std::endl;
 }
 
 // multiply 2 n-digit numbers in s1 and s2
@@ -106,21 +133,22 @@ std::string karatsuba_multiply(std::string &s1, std::string &s2) {
     if ((l1==1 || l1==2) && (l2==1 || l2==2)) {
         int n1 = std::stoi(s1), n2 = std::stoi(s2);
         std::string res = std::to_string(n1*n2);
-        std::cout << "karatsuba_multiply with base case: " << s1 << " * " << s2 << " = " << res << std::endl;
+        if(debug) std::cout << "karatsuba_multiply with base case: " << s1 << " * " << s2 << " = " << res << std::endl;
         return res;
     }
     int n = l1;
     if (l1 != l2) {
         if (l1>l2) {
-            normalize_for_karatsuba(s2,l1);
             n=l1;
         }
         else {
-            normalize_for_karatsuba(s1,l2);
             n=l2;
         }
     }
-    std::cout << "karatsuba_multiply with n=" << n << " : " << s1 << " * " << s2 << std::endl;
+    if (n%2) n++;
+    normalize_for_karatsuba(s2,n);
+    normalize_for_karatsuba(s1,n);
+    if (debug) std::cout << "karatsuba_multiply with n=" << n << " : " << s1 << " * " << s2 << std::endl;
 
     std::string a = s1.substr(0, n/2);
     std::string b = s1.substr(n/2, n-n/2);
@@ -135,22 +163,34 @@ std::string karatsuba_multiply(std::string &s1, std::string &s2) {
     auto apb_times_cpd = karatsuba_multiply(a_plus_b, c_plus_d); // term 3
     auto gauss_term = difference(difference(apb_times_cpd, ac), bd);
     
+    if(debug) {
     std::cout << "\ta+b = " << a_plus_b << " c+d = " << c_plus_d << " apb_times_cpd = " << apb_times_cpd << std::endl;
     std::cout << "\tac = " << ac << " bd = " << bd;
     std::cout << " gauss_term = " << gauss_term << std::endl;
+    }
 
     for (int i=0; i<n; i++) {
         ac += "0";
-        if (i < (n+1)/2)
+        if (i < n/2)
             gauss_term += "0";
     }
 
 
     auto final_product = sum(sum(ac, gauss_term), bd);
-    while (final_product.at(0) == '0' && final_product.length() > 0) {
+    bool all_zeros = true;
+    for(auto itr = final_product.begin(); itr != final_product.end(); itr++) {
+        if (*itr != '0') {
+            all_zeros = false;
+            break;
+        }
+    }
+    if (all_zeros)
+        return "0";
+
+    while (final_product.at(0) == '0' && final_product.size() > 0) {
         final_product.erase(final_product.begin());
     }
-    std::cout << "FINAL PRODUCT " << s1 << " * " << s2 << " = " << final_product << std::endl;
+    if (debug) std::cout << "FINAL PRODUCT " << s1 << " * " << s2 << " = " << final_product << std::endl;
     return final_product;
 
 } 
@@ -162,14 +202,28 @@ void test_karatsuba_multiply(const char *s1, const char *s2) {
 } 
 
 int main (int argc, char** argv) {
-
+    
     // test_karatsuba_multiply("024", "126"); 
     // test_karatsuba_multiply("101", "07"); 
     // test_karatsuba_multiply("134", "46"); 
-    test_karatsuba_multiply("1234", "5678"); 
+    // test_karatsuba_multiply("1234", "5678"); 
     // auto s3 = sum("1234567890", "1234567890");
     // auto s4 = sum("9999999999", "9999999999");
-    // auto s5 = difference("1610", "1564");
+    std::string input_file = argv[1];
+    std::ifstream inFile;
+    inFile.open(input_file);
+
+    std::string s1, s2;
+    inFile >> s1 >> s2;
+
+    if (debug) std::cout << "s1 = " << s1 << " s2 = " << s2 << std::endl;
+    
+    auto s3 = karatsuba_multiply(s1,s2);
+    
+    std::cout << s3 << std::endl;
+
+    // auto s5 = difference("68160000", "57895422");
+    // auto s6 = difference(s5, "417942");
 
     return 0;
 }

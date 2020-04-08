@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <chrono>
 
 bool debug = false;
 
@@ -218,9 +219,14 @@ int main (int argc, char** argv) {
 
     if (debug) std::cout << "s1 = " << s1 << " s2 = " << s2 << std::endl;
     
+    auto start = std::chrono::steady_clock::now();
     auto s3 = karatsuba_multiply(s1,s2);
+    auto end = std::chrono::steady_clock::now();
     
     std::cout << s3 << std::endl;
+    if (debug)
+        std::cout << "Computed in " << std::chrono::duration_cast<
+            std::chrono::microseconds>(end-start).count() << "us\n";
 
     // auto s5 = difference("68160000", "57895422");
     // auto s6 = difference(s5, "417942");

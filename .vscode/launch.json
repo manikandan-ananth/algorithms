@@ -6,7 +6,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${fileDirname}/${fileBasenameNoExtension}",
-      "args": ["/home/mananth/code/algorithms/0003_QuickSort/test.txt"],
+      "args": ["/home/mananth/code/algorithms/0003_QuickSort/test_submission.txt"],
       "stopAtEntry": true,
       "cwd": "${workspaceFolder}",
       "environment": [],

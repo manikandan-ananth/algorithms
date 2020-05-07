@@ -9,11 +9,11 @@
 #include <assert.h>
 #include <algorithm>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-
-namespace logging = boost::log;
+// #include <boost/log/core.hpp>
+// #include <boost/log/trivial.hpp>
+// #include <boost/log/expressions.hpp>
+// 
+// namespace logging = boost::log;
 
 namespace {
     void print_vector(std::vector<int> &arr) {
@@ -21,10 +21,10 @@ namespace {
         for (auto &v : arr) {
             ss << v << " ";
         }
-        BOOST_LOG_TRIVIAL(info) << ss.str(); 
+        //BOOST_LOG_TRIVIAL(trace) << ss.str(); 
     }
 
-    enum pivot_choice_t { FIRST, RANDOM, LAST};
+    enum pivot_choice_t { FIRST, MEDIAN_OF_THREE, LAST};
     pivot_choice_t pc = pivot_choice_t::FIRST;
     // start and end are always INCLUSIVE
     size_t choose_pivot(std::vector<int> arr, size_t start, size_t end) {
@@ -36,8 +36,27 @@ namespace {
             case pivot_choice_t::LAST:
                 return end;
             
-            case pivot_choice_t::RANDOM:
-                return 0; 
+            case pivot_choice_t::MEDIAN_OF_THREE:
+                // Random using 3 median rule
+                assert (end >= (start+2));
+                auto compute_m3_idx = [&]() -> size_t {
+                    auto a = arr[start];
+                    auto b = arr[(start+end)/2];
+                    auto c = arr[end];
+                    
+                    auto x = a - b; 
+                    auto y = b - c;
+                    auto z = a - c;
+  
+                    // Checking if b is middle (x and y both are positive) 
+                    if (x * y > 0) 
+                        return (start+end)/2;
+                    else if (x * z > 0) // Checking if c is middle then if a>c => a>b 
+                        return end; 
+                    else
+                        return start;  
+                };
+                return compute_m3_idx(); 
         }
     }
 
@@ -72,8 +91,8 @@ namespace {
     }
 
     int quick_sort_impl(std::vector<int> &arr, size_t start, size_t end) {
-        BOOST_LOG_TRIVIAL(info) << "Quick Sort Called with start = " << 
-            start << " end = " << end; 
+        //BOOST_LOG_TRIVIAL(info) << "Quick Sort Called with start = " << 
+        //    start << " end = " << end; 
 
         if (start == end) {
             return 0;
@@ -85,10 +104,10 @@ namespace {
 
         auto p = choose_pivot(arr, start, end);
         assert(p>=start && p<=end);
-        BOOST_LOG_TRIVIAL(info) << "Partition around chosen pivot index = " << p; 
+        //BOOST_LOG_TRIVIAL(info) << "Partition around chosen pivot index = " << p; 
 
         quick_sort_partition(arr, start, end, p);
-        BOOST_LOG_TRIVIAL(info) << "Post Partitioning"; 
+        //BOOST_LOG_TRIVIAL(trace) << "Post Partitioning"; 
         print_vector(arr);
 
         auto left  = (p!=start) ? quick_sort_impl(arr, start, p-1) : 0;
@@ -109,21 +128,21 @@ namespace {
         auto comp_pc_last = quick_sort_impl(arr1, 0, arr1.size()-1);
         std::cout << comp_pc_last << std::endl;
         
-        // pc = pivot_choice_t::RANDOM;
-        // auto comp_pc_random = quick_sort_impl(arr, 0, arr.size()-1);
-        // std::cout << comp_pc_random << std::endl;
+        pc = pivot_choice_t::MEDIAN_OF_THREE;
+        auto comp_pc_random = quick_sort_impl(arr2, 0, arr.size()-1);
+        std::cout << comp_pc_random << std::endl;
     }
 }
 
 
 int main (int argc, char **argv) {
-    logging::core::get()->set_filter
-    (
-        logging::trivial::severity >= logging::trivial::fatal
-        //logging::trivial::severity >= logging::trivial::info
-    );
+    // logging::core::get()->set_filter
+    // (
+    //     // logging::trivial::severity >= logging::trivial::fatal
+    //     logging::trivial::severity >= logging::trivial::info
+    // );
 
-    BOOST_LOG_TRIVIAL(info) << "Reading Input file";
+    //BOOST_LOG_TRIVIAL(info) << "Reading Input file";
     std::string input_file = argv[1];
     std::ifstream inFile;
     inFile.open(input_file);
@@ -138,13 +157,13 @@ int main (int argc, char **argv) {
         count++;
     }
     
-    BOOST_LOG_TRIVIAL(info) << "Final count read = " << count ; 
-    BOOST_LOG_TRIVIAL(info) << "Pre Sorting"; 
+    //BOOST_LOG_TRIVIAL(info) << "Final count read = " << count ; 
+    //BOOST_LOG_TRIVIAL(trace) << "Pre Sorting"; 
     print_vector(input_vector);
 
     quick_sort(input_vector);
 
-    BOOST_LOG_TRIVIAL(info) << "Post Sorting"; 
+    //BOOST_LOG_TRIVIAL(trace) << "Post Sorting"; 
     print_vector(input_vector);
 
     return 0;

@@ -129,7 +129,7 @@ std::string karatsuba_multiply(std::string &s1, std::string &s2) {
     auto l2 = s2.size(); 
 
     if (l1 == 0 || l2 == 0)
-        return 0;
+        return std::string("0");
     
     if ((l1==1 || l1==2) && (l2==1 || l2==2)) {
         int n1 = std::stoi(s1), n2 = std::stoi(s2);

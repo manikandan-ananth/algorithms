@@ -55,5 +55,5 @@
         "typeinfo": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled",
-    "python.pythonPath": "/home/linuxbrew/.linuxbrew/bin/python3"
+    "python.pythonPath": "/usr/bin/python3.7"
 }
